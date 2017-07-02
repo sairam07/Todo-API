@@ -1,21 +1,13 @@
 var express = require ('express');
+var bodyParser =require('body-parser');
 var app = express();
 var PORT = process.env.PORT || 3000;
 
-var todos = [{
-	id: 1,
-	description: 'Go for Grocery',
-	completed: false
-},{
-	id: 2,
-	description: 'call to akka',
-	completed: false
 
-},{
-	id: 3,
-	description: 'Envoy code completion',
-	completed: true
-}];
+app.use(bodyParser.json());
+
+var todos = [];
+var nextId = 1;
 
 //GET : Root
 app.get('/',function(req,res){
@@ -45,6 +37,19 @@ app.get('/todos/:id', function (req,res) {
 		console.log("Not found");
 		res.sendStatus(404);
 	}
+});
+
+//POST: create a todo 
+app.post('/todos', function (req,res) {
+	var body = req.body;
+	body.id = nextId;
+	nextId++;
+		if(body){
+			todos.push(body);
+		}
+	
+	res.json(body);
+
 });
 
 
