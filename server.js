@@ -76,17 +76,16 @@ app.post('/todos', function(req, res) {
 //DELETE: /todos/:id
 app.delete('/todos/:id', function(req, res) {
 	var todoId = parseInt(req.params.id, 10);
-	var todoItem = _.findWhere(todos, {
-		id: todoId
+
+	db.todo.findById(todoId).then(function(todo) {
+		if (todo) {
+			todo.destroy();
+			res.status(204).json('Deleted Successfuly');
+		} else {
+			res.status(404).json('Not Found');
+		}
 	});
-	if (!todoItem) {
-		res.status(400).json({
-			"error": "No todo Item Found with that Id"
-		});
-	} else {
-		todos = _.without(todos, todoItem);
-		res.json(todoItem);
-	}
+
 
 });
 
@@ -94,37 +93,28 @@ app.delete('/todos/:id', function(req, res) {
 app.put('/todos/:id', function(req, res) {
 	var body = _.pick(req.body, 'description', 'completed');
 	var todoId = parseInt(req.params.id, 10);
-	var matchedItem = _.findWhere(todos, {
-		id: todoId
+	var attributes = {};
+
+
+	if (body.hasOwnProperty('completed') ) {
+		attributes.completed = body.completed;
+		} 
+
+	if (body.hasOwnProperty('description')) {
+		attributes.description = body.description;
+	} 
+	
+	db.todo.findById(todoId).then(function(todo) {
+		if (todo) {
+			todo.update(attributes).then(function(todo) {
+				res.json(todo.toJSON());
+			}, function(e) {
+				res.status(400).json(e);
+			});
+		} else {
+			res.status(404).send('Not found');
+		}
 	});
-	var validAttributes = {};
-
-	if (!matchedItem) {
-		res.send(404).json({
-			"error": "Not found with that id "
-		});
-	}
-
-	if (body.hasOwnProperty('completed') && _.isBoolean(body.completed)) {
-		validAttributes.completed = body.completed;
-		//	matchedItem.completed = validAttributes.completed;
-	} else if (body.hasOwnProperty('completed')) {
-		return res.status(400).json({
-			"error": "Something wrong with completed"
-		});
-	}
-
-	if (body.hasOwnProperty('description') && _.isString(body.description) &&
-		body.description.trim().length > 0) {
-		validAttributes.description = body.description;
-		//	matchedItem.description = validAttributes.description;
-	} else if (body.hasOwnProperty('description')) {
-		return res.status(400).json({
-			"error": "Something wrong with description"
-		});
-	}
-	_.extend(matchedItem, validAttributes);
-	res.json(matchedItem);
 
 });
 
